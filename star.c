@@ -1,3 +1,4 @@
+/* Generate and solve a random maze using the A* algorithm */
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -100,7 +101,7 @@ void evalSucc(Node *n, Node *q, Node *openList, Node *closedList, int *openListL
 
 // Trace the path back to the entrance
 void trace(Node *n){
-   n -> c = 'o';
+   n -> c = '.';
    if(n -> originX == 0 && n -> originY == 1)
       return;
    trace(&nodes[getIndex(n -> originX, n -> originY)]);
@@ -235,12 +236,12 @@ Node *link(Node *n) {
 }
 
 // Draw the maze to the console
-void draw(){
+void draw(char c){
    int i, j;
    for (i = 0; i < height; i++) {
       for (j = 0; j < width; j++) {
          if((i == height - 2 && j == width - 1) || (i == 0 && j == 1)){
-            printf("oo");
+            printf("%c%c", c, c);
             continue;
          }
          printf("%c%c", nodes[j + i * width].c, nodes[j + i * width].c);
@@ -250,7 +251,7 @@ void draw(){
 }
 
 // Start the maze generation
-void start(){
+void start(int x){
    Node *start, *last;
    srand(time(NULL));
    init();
@@ -258,9 +259,12 @@ void start(){
    start->parent = start;
    last = start;
    while ((last = link(last)) != start);
-   indices();
-   startAStar();
-   draw();
+   if(x){
+      indices();
+     startAStar();
+   }
+   char a[3]=" .";
+   draw(a[x]);
 }
 
 // Testing ----------------------------------------------------------
@@ -343,8 +347,6 @@ void testPop(){
    assert(nLen == 0);
 }
 
-
-
 void test(){
    testCalculateH();
    testCalculateG();
@@ -359,16 +361,21 @@ void test(){
 int main(int argc, char **argv) {
    if(argc == 1)
       test();
-   if(argc > 3 || argc == 2)
-      printf("Use: ./star <width> <height>, where <width> and <height> are positive odd integers.\n");
-   if(argc == 3){
+   if(argc == 3 || argc == 4){
       width = atoi(argv[1]);
       height = atoi(argv[2]);
       goalX = height - 2;
       goalY = width - 2;
-
-      if (width % 2 != 1 || height % 2 != 1 || width <= 0 || height <= 0)
-         printf("Use: ./star <width> <height>, where <width> and <height> are positive odd integers.\n");
-      start();   
+      if (width % 2 != 1 || height % 2 != 1 || width <= 0 || height <= 0 || (argc == 4 && strcmp(argv[3], "Astar")))
+         printf("Use: ./star <width> <height> <A*>, where <width> and <height> are positive odd integers.\n");
+      else{
+         if(argc == 3)
+            start(0);      
+         else
+            start(1);
+      }
    }
+   if(argc > 4)
+      printf("Use: ./star <width> <height> <Astar>, where <width> and <height> are positive odd integers.\n");
+   return 0;
 }
