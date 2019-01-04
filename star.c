@@ -1,177 +1,203 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
+#include <math.h>
 
-/* Display the maze. */
-void ShowMaze(const char *maze, int width, int height) {
+// Structs and global variables -------------------------------------
+struct Node{
    int x, y;
-   for(y = 0; y < height; y++) {
-      for(x = 0; x < width; x++) {
-         switch(maze[y * width + x]) {
-         case 1:  printf("[]");  break;
-         case 2:  printf("<>");  break;
-         default: printf("  ");  break;
+   void *parent;
+   char c;
+   char dirs;
+   int f,g,h;
+};
+typedef struct Node Node;
+
+Node *nodes;
+int width, height;
+
+int getIndex(int i, int j){
+   return j + i * width;
+}
+
+// A* functions -----------------------------------------------------
+// Calculate heuristic cost
+void calculateH(Node *n){
+   int goalX = height - 2;
+   int goalY = width - 1;
+   n -> h = abs(n -> x - goalX) + abs(n -> y - goalY);
+   return;
+}
+
+// Calculate movement cost
+void calculateG(Node *n){
+   n -> g = 1;
+   return;
+}
+
+// Calculate overall cost of movement
+void calculateF(Node *n){
+   calculateG(n);
+   calculateH(n);
+   n -> f = n -> g + n -> h;
+   return;
+}
+
+// Find the lowest cost of movement
+int lowestF(Node *list, int len){
+   int min = 0;
+   for(int i = 0; i < len; i++)
+      if(list[i].f < list[min].f)
+         min = i;
+   return min;
+}
+
+// Push a node onto a list
+void push(Node n, Node *list, int *len){
+   list[*len] = n;
+   len++;
+}
+
+// Pop the last node
+void pop(Node n, Node *list, int *len){
+   
+}
+
+// A* algorithm
+void startAStar(){
+   Node openList[width + height];
+   Node closedList[width + height];
+   int openListLen = 0;
+   int closedListLen = 0;
+   nodes[getIndex(1,1)].f = 0;
+   push(nodes[getIndex(1,1)], openList, &openListLen);
+   while(openListLen){
+      Node q = openList[lowestF(openList, openListLen)];
+      
+   }
+}
+
+// Maze generation functions ----------------------------------------
+// Initiate the maze 
+void init() {
+   int i, j;
+   Node *n;
+   nodes = calloc(width*height, sizeof(Node));
+   for (i = 0; i < width; i++){
+      for (j = 0; j < height; j++){
+         n = nodes + i + j * width;
+         if (i * j % 2) {
+            n -> x = i;
+            n -> y = j;
+            n -> dirs = 15; //Assume that all directions can be explored (4 youngest bits set)
+            n -> c = ' '; 
          }
+         else 
+            n -> c = '#'; //Add walls between nodes
+      }
+   }
+   return;
+}
+
+// Link a node
+Node *link(Node *n) {
+   int x, y;
+   char dir;
+   Node *dest;
+   if (n == NULL) 
+      return NULL;
+   while (n -> dirs) {
+      dir = (1 << (rand() % 4));
+      if (~n->dirs & dir) 
+         continue;
+      n->dirs &= ~dir;
+      switch (dir){
+         //Right
+         case 1:
+            if (n -> x + 2 < width){
+               x = n -> x + 2;
+               y = n -> y;
+            }
+            else continue;
+            break;
+         
+         //Down
+         case 2:
+            if (n -> y + 2 < height){
+               x = n -> x;
+               y = n -> y + 2;
+            }
+            else continue;
+            break;
+         //Left
+         case 4:
+            if (n -> x - 2 >= 0){
+               x = n -> x - 2;
+               y = n -> y;
+            }
+            else continue;
+            break;
+         
+         //Up
+         case 8:
+            if (n -> y - 2 >= 0){
+               x = n -> x;
+               y = n -> y - 2;
+            }
+            else continue;
+            break;
+      }
+      dest = nodes + x + y * width;
+      if (dest ->c == ' ') {
+         if (dest -> parent != NULL) 
+            continue;
+         dest -> parent = n;
+         nodes[n -> x + (x - n -> x) / 2 + (n -> y + (y - n -> y) / 2) * width].c = ' ';
+         return dest;
+      }
+   }
+   return n -> parent;
+}
+
+// Draw the maze to the console
+void draw(){
+   int i, j;
+   for (i = 0; i < height; i++) {
+      for (j = 0; j < width; j++) {
+         if((i == height - 2 && j == width - 1) || (i == 0 && j == 1)){
+            printf("  ");
+            continue;
+         }
+         printf("%c%c", nodes[j + i * width].c, nodes[j + i * width].c);
       }
       printf("\n");
    }
 }
 
-/*  Carve the maze starting at x, y. */
-void CarveMaze(char *maze, int width, int height, int x, int y) {
-
-   int x1, y1;
-   int x2, y2;
-   int dx, dy;
-   int dir, count;
-
-   dir = rand() % 4;
-   count = 0;
-   while(count < 4) {
-      dx = 0; dy = 0;
-      switch(dir) {
-      case 0:  dx = 1;  break;
-      case 1:  dy = 1;  break;
-      case 2:  dx = -1; break;
-      default: dy = -1; break;
-      }
-      x1 = x + dx;
-      y1 = y + dy;
-      x2 = x1 + dx;
-      y2 = y1 + dy;
-      if(   x2 > 0 && x2 < width && y2 > 0 && y2 < height
-         && maze[y1 * width + x1] == 1 && maze[y2 * width + x2] == 1) {
-         maze[y1 * width + x1] = 0;
-         maze[y2 * width + x2] = 0;
-         x = x2; y = y2;
-         dir = rand() % 4;
-         count = 0;
-      } else {
-         dir = (dir + 1) % 4;
-         count += 1;
-      }
-   }
-
+// Start the maze generation
+void start(){
+   Node *start, *last;
+   srand(time(NULL));
+   init();
+   start = nodes + 1 + width;
+   start->parent = start;
+   last = start;
+   while ((last = link(last)) != start);
+   draw();
 }
 
-/* Generate maze in matrix maze with size width, height. */
-void GenerateMaze(char *maze, int width, int height) {
-
-   int x, y;
-
-   /* Initialize the maze. */
-   for(x = 0; x < width * height; x++) {
-      maze[x] = 1;
+// Main function ----------------------------------------------------
+int main(int argc, char **argv) {
+   if (argc != 3)
+   {
+      printf("Use: ./star <width> <height>, where <width> and <height> are positive odd integers.\n");
    }
-   maze[1 * width + 1] = 0;
+   
+   width = atoi(argv[1]);
+   height = atoi(argv[2]);
 
-   /* Seed the random number generator. */
-   srand(time(0));
-
-   /* Carve the maze. */
-   for(y = 1; y < height; y += 2) {
-      for(x = 1; x < width; x += 2) {
-         CarveMaze(maze, width, height, x, y);
-      }
-   }
-
-   /* Set up the entry and exit. */
-   maze[0 * width + 1] = 0;
-   maze[(height - 1) * width + (width - 2)] = 0;
-
-}
-
-/* Solve the maze. */
-void SolveMaze(char *maze, int width, int height) {
-
-   int dir, count;
-   int x, y;
-   int dx, dy;
-   int forward;
-
-   /* Remove the entry and exit. */
-   maze[0 * width + 1] = 1;
-   maze[(height - 1) * width + (width - 2)] = 1;
-
-   forward = 1;
-   dir = 0;
-   count = 0;
-   x = 1;
-   y = 1;
-   while(x != width - 2 || y != height - 2) {
-      dx = 0; dy = 0;
-      switch(dir) {
-      case 0:  dx = 1;  break;
-      case 1:  dy = 1;  break;
-      case 2:  dx = -1; break;
-      default: dy = -1; break;
-      }
-      if(   (forward  && maze[(y + dy) * width + (x + dx)] == 0)
-         || (!forward && maze[(y + dy) * width + (x + dx)] == 2)) {
-         maze[y * width + x] = forward ? 2 : 3;
-         x += dx;
-         y += dy;
-         forward = 1;
-         count = 0;
-         dir = 0;
-      } else {
-         dir = (dir + 1) % 4;
-         count += 1;
-         if(count > 3) {
-            forward = 0;
-            count = 0;
-         }
-      }
-   }
-
-   /* Replace the entry and exit. */
-   maze[(height - 2) * width + (width - 2)] = 2;
-   maze[(height - 1) * width + (width - 2)] = 2;
-
-}
-
-int main(int argc,char *argv[]) {
-
-   int width, height;
-   char *maze;
-
-   printf("Maze by Joe Wingbermuehle 19990805\n");
-   if(argc != 3 && argc != 4) {
-      printf("usage: maze <width> <height> [s]\n");
-      exit(EXIT_FAILURE);
-   }
-
-   /* Get and validate the size. */
-   width = atoi(argv[1]) * 2 + 3;
-   height = atoi(argv[2]) * 2 + 3;
-   if(width < 7 || height < 7) {
-      printf("error: illegal maze size\n");
-      exit(EXIT_FAILURE);
-   }
-   if(argc == 4 && argv[3][0] != 's') {
-      printf("error: invalid argument\n");
-      exit(EXIT_FAILURE);
-   }
-
-   /* Allocate the maze array. */
-   maze = (char*)malloc(width * height * sizeof(char));
-   if(maze == NULL) {
-      printf("error: not enough memory\n");
-      exit(EXIT_FAILURE);
-   }
-
-   /* Generate and display the maze. */
-   GenerateMaze(maze, width, height);
-   ShowMaze(maze, width, height);
-
-   /* Solve the maze if requested. */
-   if(argc == 4) {
-      SolveMaze(maze, width, height);
-      ShowMaze(maze, width, height);
-   }
-
-   /* Clean up. */
-   free(maze);
-   exit(EXIT_SUCCESS);
-
+   if (width % 2 != 1 || height % 2 != 1 || width <= 0 || height <= 0)
+      printf("Use: ./star <width> <height>, where <width> and <height> are positive odd integers.\n");
+   start();   
 }
