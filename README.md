@@ -4,8 +4,8 @@
 
 The program can be run with:
 - "./star" for testing
-- "./star <height> <width>" to generate a random maze
-- "./star <height> <width> Astar" to generate and solve a maze
+- "./star *height* *width*" to generate a random maze
+- "./star *height* *width* Astar" to generate and solve a maze
 
 Resources used:
 Maze generation: https://en.wikipedia.org/wiki/Maze_generation_algorithm
