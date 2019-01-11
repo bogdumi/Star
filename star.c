@@ -7,6 +7,7 @@
 #include <assert.h>
 
 // Structs and global variables -------------------------------------
+// Node struct
 struct Node{
    int x, y;
    void *parent;
@@ -22,6 +23,7 @@ int width, height, goalX, goalY;
 int dx[4] = {0, 1, 0, -1};
 int dy[4] = {1, 0, -1, 0};
 
+// Access array at indices i and j
 int getIndex(int i, int j){
    return j + i * width;
 }
@@ -61,7 +63,7 @@ void push(Node n, Node *list, int *len){
    return;
 }
 
-// Pop the last node
+// Pop node at index
 void pop(Node *list, int *len, int index){
    for(int i = index; i < (*len) - 1; i++)
       list[i] = list[i+1];
@@ -79,7 +81,10 @@ int searchList(Node n, Node *list, int len){
 }
 
 // Evaluate a successor
-void evalSucc(Node *n, Node *q, Node *openList, Node *closedList, int *openListLen, int *closedListLen){
+void evalSucc(Node *n, Node *q, 
+			  Node *openList, Node *closedList, 
+			  int *openListLen, int *closedListLen){
+
    if(n -> c != ' ' || n -> x == 0 || n -> y == 0)
       return;
    if(n -> x == goalX && n -> y == goalY){
@@ -121,30 +126,17 @@ void startAStar(){
       int qIndex = lowestF(openList, openListLen);
       Node q = openList[qIndex];
       pop(openList, &openListLen, qIndex);
-      // Right
-      evalSucc(&nodes[getIndex(q.x, q.y + 1)], &q, 
-               openList, closedList, 
-               &openListLen, &closedListLen);
-      // Down
-      evalSucc(&nodes[getIndex(q.x + 1, q.y)], &q, 
-               openList, closedList, 
-               &openListLen, &closedListLen);
-      // Left
-      evalSucc(&nodes[getIndex(q.x, q.y - 1)], &q, 
-               openList, closedList, 
-               &openListLen, &closedListLen);
-      // Up
-      evalSucc(&nodes[getIndex(q.x - 1, q.y)], &q, 
-               openList, closedList, 
-               &openListLen, &closedListLen);
-      
+      for(int i = 0; i < 4; i++)
+		evalSucc(&nodes[getIndex(q.x + dx[i], q.y + dy[i])], &q, 
+          		openList, closedList, 
+        		&openListLen, &closedListLen);
+
       push(q, closedList, &closedListLen);
    }
    trace(&nodes[getIndex(goalX, goalY)]);
 }
 
 // Maze generation functions ----------------------------------------
-
 // Set indices
 void indices(){
    for(int i = 0; i < height; i++)
@@ -268,7 +260,6 @@ void start(int x){
 }
 
 // Testing ----------------------------------------------------------
-
 void testCalculateH(){
    Node *n = malloc(sizeof(Node));
    goalX = 0, goalY = 0;
@@ -359,20 +350,24 @@ void test(){
 
 // Main function ----------------------------------------------------
 int main(int argc, char **argv) {
-   if(argc == 1)
+   	if(argc == 1)
       test();
-   if(argc == 3 || argc == 4){
-      width = atoi(argv[1]);
-      height = atoi(argv[2]);
-      goalX = height - 2;
-      goalY = width - 2;
-      if (width % 2 != 1 || height % 2 != 1 || width <= 0 || height <= 0 || (argc == 4 && strcmp(argv[3], "Astar")))
-         printf("Use: ./star <width> <height> <A*>, where <width> and <height> are positive odd integers.\n");
-      else{
-         if(argc == 3)
-            start(0);      
-         else
-            start(1);
+	if(argc == 2)
+		printf("Use: ./star <width> <height> <A*>, where <width> and <height> are positive odd integers.\n");
+   	if(argc == 3 || argc == 4){
+    	width = atoi(argv[1]);
+    	height = atoi(argv[2]);
+    	goalX = height - 2;
+    	goalY = width - 2;
+        if (width % 2 != 1 || height % 2 != 1 
+        	|| width <= 0 || height <= 0 
+        	|| (argc == 4 && strcmp(argv[3], "Astar")))
+        		printf("Use: ./star <width> <height> <A*>, where <width> and <height> are positive odd integers.\n");
+      	else {
+        	if(argc == 3)
+            	start(0);      
+         	else
+            	start(1);
       }
    }
    if(argc > 4)
