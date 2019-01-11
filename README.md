@@ -8,9 +8,6 @@ The program can be run with:
 - "./star *height* *width* Astar" to generate and solve a maze
 
 Resources used:
-
-Maze generation: https://en.wikipedia.org/wiki/Maze_generation_algorithm
-
-An introduction to heuristic algorithms: https://www.researchgate.net/publication/228573156_An_introduction_to_heuristic_algorithms
-
-A* algorithm: https://en.wikipedia.org/wiki/A*_search_algorithm
+- Maze generation: https://en.wikipedia.org/wiki/Maze_generation_algorithm
+- An introduction to heuristic algorithms: https://www.researchgate.net/publication/228573156_An_introduction_to_heuristic_algorithms
+- A* algorithm: https://en.wikipedia.org/wiki/A*_search_algorithm
